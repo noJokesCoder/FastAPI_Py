@@ -1,7 +1,7 @@
 from calendar import c
 from turtle import pos, st
 from typing import Optional
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, Response, HTTPException, status
 
 from typing import Any
 from pydantic import BaseModel, Field
@@ -29,6 +29,13 @@ def find_post(id: int) -> Optional[dict]:
     for p in posts:
         if p['id'] == id:
             return p
+    return None
+
+
+def find_post_index(id: int) -> Optional[int]:
+    for index, p in enumerate(posts):
+        if p['id'] == id:
+            return index
     return None
 
 
@@ -73,3 +80,17 @@ def create_posts(payload: Post) -> dict[str, bool | dict]:
         'successfully_created': True,
         'data': post_dict
     }
+
+
+@app.delete('/posts/{id}', status_code=status.HTTP_200_OK)
+def delete_post(id: int) -> Response:
+    indx = find_post_index(id)
+
+    if indx is not None:
+        posts.pop(indx)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id {id} not found"
+        )
